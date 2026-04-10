@@ -1,22 +1,24 @@
-/**
- * Firebase configuration (optional)
- *
- * This backend currently authenticates using JWT + environment variables.
- * We keep Firebase config here in case you want to later extend the backend
- * to use Firebase services.
- */
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCPJqG53maj5B2hcxH5jdF7gO9w8wzN3wk",
-  authDomain: "portfolio-9a03c.firebaseapp.com",
-  projectId: "portfolio-9a03c",
-  storageBucket: "portfolio-9a03c.firebasestorage.app",
-  messagingSenderId: "940664491313",
-  appId: "1:940664491313:web:c831104669a9ca259eb410",
-  measurementId: "G-J2Z5ZG3KNE",
-};
+let db;
 
-module.exports = {
-  firebaseConfig,
-};
+function getDb() {
+  if (!db) {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    if (!projectId) {
+      throw new Error("FIREBASE_PROJECT_ID is not configured in environment variables");
+    }
+    const app = initializeApp({
+      credential: cert({
+        projectId: projectId,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+      }),
+    });
+    db = getFirestore(app);
+  }
+  return db;
+}
 
+module.exports = { getDb };
