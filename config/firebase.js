@@ -17,6 +17,8 @@ function getDb() {
       }),
     });
     db = getFirestore(app);
+    // Use REST transport instead of gRPC to avoid OpenSSL 3 / Node 22 cipher incompatibility
+    db.settings({ preferRest: true });
   }
   return db;
 }
