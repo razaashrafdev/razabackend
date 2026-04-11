@@ -6,10 +6,35 @@
  * - POST /api/auth/verify-otp
  * - GET  /api/auth/me
  *
- * - GET    /api/projects
- * - POST   /api/projects
- * - PUT    /api/projects/:id
- * - DELETE /api/projects/:id
+ * - GET    /api/projects/list
+ * - POST   /api/projects/add
+ * - PUT    /api/projects/edit/:id
+ * - DELETE /api/projects/remove/:id
+ *
+ * - GET    /api/services/list
+ * - POST   /api/services/add
+ * - PUT    /api/services/edit/:id
+ * - DELETE /api/services/remove/:id
+ *
+ * - GET    /api/experiences/list
+ * - POST   /api/experiences/add
+ * - PUT    /api/experiences/edit/:id
+ * - DELETE /api/experiences/remove/:id
+ *
+ * - GET    /api/pricing/list
+ * - POST   /api/pricing/add
+ * - PUT    /api/pricing/edit/:id
+ * - DELETE /api/pricing/remove/:id
+ *
+ * - GET    /api/education/list
+ * - POST   /api/education/add
+ * - PUT    /api/education/edit/:id
+ * - DELETE /api/education/remove/:id
+ *
+ * - GET    /api/testimonials/list
+ * - POST   /api/testimonials/add
+ * - PUT    /api/testimonials/edit/:id
+ * - DELETE /api/testimonials/remove/:id
  *
  * Auth is performed via OTP + JWT.
  */
@@ -20,6 +45,11 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const projectsRoutes = require("./routes/projectsRoutes");
+const servicesRoutes = require("./routes/servicesRoutes");
+const experiencesRoutes = require("./routes/experiencesRoutes");
+const pricingRoutes = require("./routes/pricingRoutes");
+const educationRoutes = require("./routes/educationRoutes");
+const testimonialsRoutes = require("./routes/testimonialsRoutes");
 
 const app = express();
 
@@ -34,6 +64,11 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectsRoutes);
+app.use("/api/services", servicesRoutes);
+app.use("/api/experiences", experiencesRoutes);
+app.use("/api/pricing", pricingRoutes);
+app.use("/api/education", educationRoutes);
+app.use("/api/testimonials", testimonialsRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ ok: true });
