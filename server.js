@@ -50,6 +50,7 @@ const experiencesRoutes = require("./routes/experiencesRoutes");
 const pricingRoutes = require("./routes/pricingRoutes");
 const educationRoutes = require("./routes/educationRoutes");
 const testimonialsRoutes = require("./routes/testimonialsRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use("/api/experiences", experiencesRoutes);
 app.use("/api/pricing", pricingRoutes);
 app.use("/api/education", educationRoutes);
 app.use("/api/testimonials", testimonialsRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ ok: true });
