@@ -1,12 +1,35 @@
 const { getDb } = require("../config/firebase");
 
+const MAX_HOME_PROJECTS = 3;
+const HOME_LIMIT_ERROR =
+  "first remove one project from home to show this project in home page";
+
+function isShownOnHome(data) {
+  return data.showOnHome !== false;
+}
+
+async function countProjectsShownOnHome(db, excludeId) {
+  const snapshot = await db.collection("projects").get();
+  let n = 0;
+  snapshot.forEach((doc) => {
+    if (excludeId && doc.id === excludeId) return;
+    if (isShownOnHome(doc.data())) n += 1;
+  });
+  return n;
+}
+
 async function getProjects(req, res) {
   try {
     const db = getDb();
-    const snapshot = await db.collection("projects").orderBy("displayOrder", "asc").get();
+    const snapshot = await db.collection("projects").get();
     const projects = [];
     snapshot.forEach((doc) => {
       projects.push({ id: doc.id, ...doc.data() });
+    });
+    projects.sort((a, b) => {
+      const ta = new Date(a.createdAt || a.updatedAt || 0).getTime();
+      const tb = new Date(b.createdAt || b.updatedAt || 0).getTime();
+      return tb - ta;
     });
     return res.status(200).json({ success: true, data: projects });
   } catch (err) {
@@ -16,7 +39,7 @@ async function getProjects(req, res) {
 }
 
 async function createProject(req, res) {
-  const { title, description, tech, link, github, showOnHome, displayOrder } = req.body || {};
+  const { title, description, tech, link, github, showOnHome } = req.body || {};
 
   if (!title || !description) {
     return res.status(400).json({ error: "Title and description are required" });
@@ -24,14 +47,20 @@ async function createProject(req, res) {
 
   try {
     const db = getDb();
+    const home = Boolean(showOnHome);
+    if (home) {
+      const onHome = await countProjectsShownOnHome(db, null);
+      if (onHome >= MAX_HOME_PROJECTS) {
+        return res.status(400).json({ error: HOME_LIMIT_ERROR });
+      }
+    }
     const docRef = await db.collection("projects").add({
       title: String(title).trim(),
       description: String(description).trim(),
       tech: Array.isArray(tech) ? tech : (typeof tech === "string" ? tech.split(",").map((s) => s.trim()).filter(Boolean) : []),
       link: link || "",
       github: github || "",
-      showOnHome: Boolean(showOnHome),
-      displayOrder: Number(displayOrder) || 1,
+      showOnHome: home,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -45,7 +74,7 @@ async function createProject(req, res) {
 
 async function updateProject(req, res) {
   const { id } = req.params;
-  const { title, description, tech, link, github, showOnHome, displayOrder } = req.body || {};
+  const { title, description, tech, link, github, showOnHome } = req.body || {};
 
   if (!id) {
     return res.status(400).json({ error: "Project ID is required" });
@@ -58,6 +87,17 @@ async function updateProject(req, res) {
     if (!doc.exists) {
       return res.status(404).json({ error: "Project not found" });
     }
+    const prev = doc.data();
+    if (showOnHome !== undefined) {
+      const nextHome = Boolean(showOnHome);
+      const wasOnHome = isShownOnHome(prev);
+      if (nextHome && !wasOnHome) {
+        const onHome = await countProjectsShownOnHome(db, id);
+        if (onHome >= MAX_HOME_PROJECTS) {
+          return res.status(400).json({ error: HOME_LIMIT_ERROR });
+        }
+      }
+    }
     const updateData = {
       ...(title !== undefined && { title: String(title).trim() }),
       ...(description !== undefined && { description: String(description).trim() }),
@@ -65,7 +105,6 @@ async function updateProject(req, res) {
       ...(link !== undefined && { link: link || "" }),
       ...(github !== undefined && { github: github || "" }),
       ...(showOnHome !== undefined && { showOnHome: Boolean(showOnHome) }),
-      ...(displayOrder !== undefined && { displayOrder: Number(displayOrder) || 1 }),
       updatedAt: new Date().toISOString(),
     };
     await docRef.update(updateData);
