@@ -1,5 +1,6 @@
 const { getDb } = require("../config/firebase");
 const { FieldValue } = require("firebase-admin/firestore");
+const ALLOWED_PATH_REGEX = /^\/[a-zA-Z0-9/_-]{1,200}$/;
 
 function localDayKey(d) {
   const y = d.getUTCFullYear();
@@ -14,6 +15,14 @@ exports.recordVisit = async (req, res) => {
     if (!path) {
       return res.status(400).json({ error: "Path is required" });
     }
+    const pathValue = String(path).trim();
+    if (!ALLOWED_PATH_REGEX.test(pathValue)) {
+      return res.status(400).json({ error: "Invalid path format" });
+    }
+    const sanitizedPathKey = pathValue.replace(/\./g, "_");
+    if (!sanitizedPathKey || sanitizedPathKey.length > 200) {
+      return res.status(400).json({ error: "Invalid path length" });
+    }
 
     const db = getDb();
     const today = new Date();
@@ -26,14 +35,13 @@ exports.recordVisit = async (req, res) => {
         date: dayKey,
         timestamp: today.getTime(),
         views: FieldValue.increment(1),
-        [`paths.${path.replace(/\./g, "_")}`]: FieldValue.increment(1),
+        [`paths.${sanitizedPathKey}`]: FieldValue.increment(1),
       },
       { merge: true }
     );
 
     res.status(200).json({ ok: true });
   } catch (err) {
-    console.error("Error recording visit:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -142,7 +150,6 @@ exports.getStats = async (req, res) => {
       last12Months,
     });
   } catch (err) {
-    console.error("Error fetching stats:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 };

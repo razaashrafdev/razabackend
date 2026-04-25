@@ -8,7 +8,6 @@ async function getPricing(req, res) {
     snapshot.forEach((doc) => { items.push({ id: doc.id, ...doc.data() }); });
     return res.status(200).json({ success: true, data: items });
   } catch (err) {
-    console.error("[Pricing] Error fetching:", err?.message || err);
     return res.status(500).json({ error: "Failed to fetch pricing" });
   }
 }
@@ -32,7 +31,6 @@ async function createPricing(req, res) {
     const doc = await docRef.get();
     return res.status(201).json({ success: true, data: { id: docRef.id, ...doc.data() } });
   } catch (err) {
-    console.error("[Pricing] Error creating:", err?.message || err);
     return res.status(500).json({ error: "Failed to create pricing" });
   }
 }
@@ -60,7 +58,6 @@ async function updatePricing(req, res) {
     const updated = await docRef.get();
     return res.status(200).json({ success: true, data: { id: updated.id, ...updated.data() } });
   } catch (err) {
-    console.error("[Pricing] Error updating:", err?.message || err);
     return res.status(500).json({ error: "Failed to update pricing" });
   }
 }
@@ -77,7 +74,6 @@ async function deletePricing(req, res) {
     await docRef.delete();
     return res.status(200).json({ success: true, message: "Pricing deleted" });
   } catch (err) {
-    console.error("[Pricing] Error deleting:", err?.message || err);
     return res.status(500).json({ error: "Failed to delete pricing" });
   }
 }

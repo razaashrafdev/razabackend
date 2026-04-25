@@ -45,6 +45,7 @@
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
@@ -56,8 +57,11 @@ const educationRoutes = require("./routes/educationRoutes");
 const testimonialsRoutes = require("./routes/testimonialsRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const { globalLimiter } = require("./middleware/rateLimiters");
 
 const app = express();
+app.disable("x-powered-by");
+app.use(helmet());
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL || "";
 const allowedOrigins = FRONTEND_ORIGIN.split(",")
@@ -79,7 +83,8 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
+app.use(globalLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectsRoutes);
@@ -99,12 +104,25 @@ app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
+app.use((err, _req, res, _next) => {
+  const status = Number(err?.status || err?.statusCode || 500);
+  const isProduction = process.env.NODE_ENV === "production";
+
+  const payload = {
+    error: isProduction ? "Internal server error" : (err?.message || "Internal server error"),
+  };
+
+  if (!isProduction) {
+    payload.stack = err?.stack;
+  }
+
+  res.status(status).json(payload);
+});
+
 const PORT = Number(process.env.PORT || 5000);
 
 module.exports = app;
 
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
-  });
+  app.listen(PORT);
 }

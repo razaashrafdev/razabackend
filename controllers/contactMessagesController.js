@@ -1,8 +1,10 @@
 const { getDb } = require("../config/firebase");
 
-const MAX_NAME = 200;
+const MIN_NAME = 2;
+const MAX_NAME = 30;
 const MAX_SUBJECT = 300;
-const MAX_MESSAGE = 10000;
+const MIN_MESSAGE = 10;
+const MAX_MESSAGE = 1000;
 
 function isValidEmail(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
@@ -10,7 +12,7 @@ function isValidEmail(s) {
 
 /** Public: save a contact form submission */
 async function submitContact(req, res) {
-  const { name, email, subject, message } = req.body || {};
+  const { name, email, subject, message, website } = req.body || {};
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: "Name, email, and message are required" });
@@ -20,8 +22,14 @@ async function submitContact(req, res) {
   const emailT = String(email).trim().toLowerCase();
   const subjectT = subject != null ? String(subject).trim() : "";
   const messageT = String(message).trim();
+  const websiteT = website != null ? String(website).trim() : "";
 
-  if (!nameT || nameT.length > MAX_NAME) {
+  // Honeypot: bots filling hidden fields are accepted silently and ignored.
+  if (websiteT) {
+    return res.status(200).json({ success: true });
+  }
+
+  if (nameT.length < MIN_NAME || nameT.length > MAX_NAME) {
     return res.status(400).json({ error: "Invalid name" });
   }
   if (!isValidEmail(emailT)) {
@@ -30,7 +38,7 @@ async function submitContact(req, res) {
   if (subjectT.length > MAX_SUBJECT) {
     return res.status(400).json({ error: "Subject is too long" });
   }
-  if (!messageT || messageT.length > MAX_MESSAGE) {
+  if (messageT.length < MIN_MESSAGE || messageT.length > MAX_MESSAGE) {
     return res.status(400).json({ error: "Message is missing or too long" });
   }
 
@@ -46,7 +54,6 @@ async function submitContact(req, res) {
     const doc = await docRef.get();
     return res.status(201).json({ success: true, data: { id: docRef.id, ...doc.data() } });
   } catch (err) {
-    console.error("[Contact] Error saving message:", err?.message || err);
     return res.status(500).json({ error: "Failed to send message" });
   }
 }
@@ -67,7 +74,6 @@ async function listContactMessages(req, res) {
     });
     return res.status(200).json({ success: true, data: items });
   } catch (err) {
-    console.error("[Contact] Error listing messages:", err?.message || err);
     return res.status(500).json({ error: "Failed to fetch messages" });
   }
 }
@@ -89,7 +95,6 @@ async function deleteContactMessage(req, res) {
     await docRef.delete();
     return res.status(200).json({ success: true, message: "Message deleted" });
   } catch (err) {
-    console.error("[Contact] Error deleting message:", err?.message || err);
     return res.status(500).json({ error: "Failed to delete message" });
   }
 }

@@ -2,7 +2,6 @@
  * Email sender for OTP codes.
  *
  * Uses SMTP via nodemailer.
- * - In local/dev, if SMTP env vars are not configured, we fall back to console logging the OTP.
  */
 
 let nodemailerLib;
@@ -19,12 +18,22 @@ async function sendOtpEmail({ toEmail, otpCode }) {
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
   const fromEmail = process.env.OTP_FROM_EMAIL;
+  const isProduction = process.env.NODE_ENV === "production";
 
-  // Local fallback: if SMTP isn't configured, log OTP.
-  if (!nodemailerLib || !smtpHost || !smtpPort || !smtpUser || !smtpPass || !fromEmail) {
-    // eslint-disable-next-line no-console
-    console.log(`[OTP DEV] To: ${toEmail} | Code: ${otpCode}`);
-    return { delivered: false, via: "console-log" };
+  if (!nodemailerLib) {
+    const err = new Error("Email transport is not available");
+    err.statusCode = 500;
+    throw err;
+  }
+
+  if (!smtpHost || !smtpPort || !smtpUser || !smtpPass || !fromEmail) {
+    const err = new Error(
+      isProduction
+        ? "Email service is unavailable"
+        : "SMTP is not configured"
+    );
+    err.statusCode = isProduction ? 503 : 500;
+    throw err;
   }
 
   const transporter = nodemailerLib.createTransport({

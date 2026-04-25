@@ -1,8 +1,10 @@
 const express = require("express");
 const authController = require("../controllers/authController");
 const requireAuth = require("../middleware/authMiddleware");
+const { authRoutesLimiter, requestOtpLimiter, verifyOtpLimiter } = require("../middleware/rateLimiters");
 
 const router = express.Router();
+router.use(authRoutesLimiter);
 
 /**
  * POST /api/auth/request-otp
@@ -22,7 +24,7 @@ const router = express.Router();
  * 400 - missing email
  * 401 - email is wrong / not allowed
  */
-router.post("/request-otp", authController.requestOtp);
+router.post("/request-otp", requestOtpLimiter, authController.requestOtp);
 
 /**
  * POST /api/auth/verify-otp
@@ -45,7 +47,7 @@ router.post("/request-otp", authController.requestOtp);
  * 400 - missing email/code
  * 401 - invalid/expired code
  */
-router.post("/verify-otp", authController.verifyOtp);
+router.post("/verify-otp", verifyOtpLimiter, authController.verifyOtp);
 
 /**
  * GET /api/auth/me
