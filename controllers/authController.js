@@ -43,22 +43,17 @@ async function requestOtp(req, res) {
   }
 
   const otpCode = generateOtpCode();
-  const otpHash = await bcrypt.hash(otpCode, 10);
-  const expiresAt = Date.now() + otpTtlSeconds * 1000;
-
-  otpStore.set(normalizedEmail, { hash: otpHash, expiresAt });
-
-  // If email delivery fails (SMTP credentials / network / provider restrictions),
-  // we should NOT crash the whole endpoint. OTP is already stored and can
-  // still be used for login (in dev we log OTP to console).
   try {
     await sendOtpEmail({ toEmail: normalizedEmail, otpCode });
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("[OTP] Failed to send email:", err?.message || err);
-    // eslint-disable-next-line no-console
-    console.log(`[OTP DEV] To: ${normalizedEmail} | Code: ${otpCode}`);
+    return res
+      .status(err?.statusCode || 500)
+      .json({ error: err?.message || "Failed to send OTP email" });
   }
+
+  const otpHash = await bcrypt.hash(otpCode, 10);
+  const expiresAt = Date.now() + otpTtlSeconds * 1000;
+  otpStore.set(normalizedEmail, { hash: otpHash, expiresAt });
 
   return res.status(200).json({ success: true, expiresIn: otpTtlSeconds });
 }

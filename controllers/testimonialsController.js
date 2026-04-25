@@ -8,7 +8,6 @@ async function getTestimonials(req, res) {
     snapshot.forEach((doc) => { items.push({ id: doc.id, ...doc.data() }); });
     return res.status(200).json({ success: true, data: items });
   } catch (err) {
-    console.error("[Testimonials] Error fetching:", err?.message || err);
     return res.status(500).json({ error: "Failed to fetch testimonials" });
   }
 }
@@ -30,7 +29,6 @@ async function createTestimonial(req, res) {
     const doc = await docRef.get();
     return res.status(201).json({ success: true, data: { id: docRef.id, ...doc.data() } });
   } catch (err) {
-    console.error("[Testimonials] Error creating:", err?.message || err);
     return res.status(500).json({ error: "Failed to create testimonial" });
   }
 }
@@ -56,7 +54,6 @@ async function updateTestimonial(req, res) {
     const updated = await docRef.get();
     return res.status(200).json({ success: true, data: { id: updated.id, ...updated.data() } });
   } catch (err) {
-    console.error("[Testimonials] Error updating:", err?.message || err);
     return res.status(500).json({ error: "Failed to update testimonial" });
   }
 }
@@ -73,7 +70,6 @@ async function deleteTestimonial(req, res) {
     await docRef.delete();
     return res.status(200).json({ success: true, message: "Testimonial deleted" });
   } catch (err) {
-    console.error("[Testimonials] Error deleting:", err?.message || err);
     return res.status(500).json({ error: "Failed to delete testimonial" });
   }
 }

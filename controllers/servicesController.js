@@ -10,7 +10,6 @@ async function getServices(req, res) {
     });
     return res.status(200).json({ success: true, data: services });
   } catch (err) {
-    console.error("[Services] Error fetching:", err?.message || err);
     return res.status(500).json({ error: "Failed to fetch services" });
   }
 }
@@ -34,7 +33,6 @@ async function createService(req, res) {
     const doc = await docRef.get();
     return res.status(201).json({ success: true, data: { id: docRef.id, ...doc.data() } });
   } catch (err) {
-    console.error("[Services] Error creating:", err?.message || err);
     return res.status(500).json({ error: "Failed to create service" });
   }
 }
@@ -64,7 +62,6 @@ async function updateService(req, res) {
     const updated = await docRef.get();
     return res.status(200).json({ success: true, data: { id: updated.id, ...updated.data() } });
   } catch (err) {
-    console.error("[Services] Error updating:", err?.message || err);
     return res.status(500).json({ error: "Failed to update service" });
   }
 }
@@ -86,7 +83,6 @@ async function deleteService(req, res) {
     await docRef.delete();
     return res.status(200).json({ success: true, message: "Service deleted" });
   } catch (err) {
-    console.error("[Services] Error deleting:", err?.message || err);
     return res.status(500).json({ error: "Failed to delete service" });
   }
 }

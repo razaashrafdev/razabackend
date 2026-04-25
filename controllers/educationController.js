@@ -8,7 +8,6 @@ async function getEducation(req, res) {
     snapshot.forEach((doc) => { items.push({ id: doc.id, ...doc.data() }); });
     return res.status(200).json({ success: true, data: items });
   } catch (err) {
-    console.error("[Education] Error fetching:", err?.message || err);
     return res.status(500).json({ error: "Failed to fetch education" });
   }
 }
@@ -32,7 +31,6 @@ async function createEducation(req, res) {
     const doc = await docRef.get();
     return res.status(201).json({ success: true, data: { id: docRef.id, ...doc.data() } });
   } catch (err) {
-    console.error("[Education] Error creating:", err?.message || err);
     return res.status(500).json({ error: "Failed to create education" });
   }
 }
@@ -60,7 +58,6 @@ async function updateEducation(req, res) {
     const updated = await docRef.get();
     return res.status(200).json({ success: true, data: { id: updated.id, ...updated.data() } });
   } catch (err) {
-    console.error("[Education] Error updating:", err?.message || err);
     return res.status(500).json({ error: "Failed to update education" });
   }
 }
@@ -77,7 +74,6 @@ async function deleteEducation(req, res) {
     await docRef.delete();
     return res.status(200).json({ success: true, message: "Education deleted" });
   } catch (err) {
-    console.error("[Education] Error deleting:", err?.message || err);
     return res.status(500).json({ error: "Failed to delete education" });
   }
 }

@@ -33,7 +33,6 @@ async function getProjects(req, res) {
     });
     return res.status(200).json({ success: true, data: projects });
   } catch (err) {
-    console.error("[Projects] Error fetching:", err?.message || err);
     return res.status(500).json({ error: "Failed to fetch projects" });
   }
 }
@@ -67,7 +66,6 @@ async function createProject(req, res) {
     const doc = await docRef.get();
     return res.status(201).json({ success: true, data: { id: docRef.id, ...doc.data() } });
   } catch (err) {
-    console.error("[Projects] Error creating:", err?.message || err);
     return res.status(500).json({ error: "Failed to create project" });
   }
 }
@@ -111,7 +109,6 @@ async function updateProject(req, res) {
     const updated = await docRef.get();
     return res.status(200).json({ success: true, data: { id: updated.id, ...updated.data() } });
   } catch (err) {
-    console.error("[Projects] Error updating:", err?.message || err);
     return res.status(500).json({ error: "Failed to update project" });
   }
 }
@@ -133,7 +130,6 @@ async function deleteProject(req, res) {
     await docRef.delete();
     return res.status(200).json({ success: true, message: "Project deleted" });
   } catch (err) {
-    console.error("[Projects] Error deleting:", err?.message || err);
     return res.status(500).json({ error: "Failed to delete project" });
   }
 }
