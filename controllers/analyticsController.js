@@ -1,6 +1,13 @@
 const { getDb } = require("../config/firebase");
 const { FieldValue, FieldPath } = require("firebase-admin/firestore");
-const ALLOWED_PATH_REGEX = /^\/[a-zA-Z0-9/_-]{1,200}$/;
+const ALLOWED_PATH_REGEX = /^\/[a-zA-Z0-9/_-]{0,200}$/;
+
+function normalizePath(pathValue) {
+  let path = String(pathValue).trim();
+  if (!path.startsWith("/")) path = `/${path}`;
+  if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+  return path;
+}
 
 function localDayKey(d) {
   const y = d.getUTCFullYear();
@@ -38,7 +45,10 @@ exports.recordVisit = async (req, res) => {
     if (!path) {
       return res.status(400).json({ error: "Path is required" });
     }
-    const pathValue = String(path).trim();
+    const pathValue = normalizePath(path);
+    if (!pathValue || pathValue.length > 201) {
+      return res.status(400).json({ error: "Invalid path length" });
+    }
     if (!ALLOWED_PATH_REGEX.test(pathValue)) {
       return res.status(400).json({ error: "Invalid path format" });
     }
