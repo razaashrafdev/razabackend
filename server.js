@@ -40,6 +40,9 @@
  * - GET    /api/contact/list
  * - DELETE /api/contact/remove/:id
  *
+ * - GET    /api/stats
+ * - PUT    /api/stats
+ *
  * Auth is performed via OTP + JWT.
  */
 
@@ -57,6 +60,7 @@ const educationRoutes = require("./routes/educationRoutes");
 const testimonialsRoutes = require("./routes/testimonialsRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const statsRoutes = require("./routes/statsRoutes");
 const { globalLimiter } = require("./middleware/rateLimiters");
 
 const app = express();
@@ -95,6 +99,7 @@ app.use("/api/education", educationRoutes);
 app.use("/api/testimonials", testimonialsRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/stats", statsRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ ok: true });

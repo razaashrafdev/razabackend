@@ -3,7 +3,7 @@ const { getDb } = require("../config/firebase");
 async function getTestimonials(req, res) {
   try {
     const db = getDb();
-    const snapshot = await db.collection("testimonials").orderBy("createdAt", "asc").get();
+    const snapshot = await db.collection("testimonials").orderBy("createdAt", "desc").get();
     const items = [];
     snapshot.forEach((doc) => { items.push({ id: doc.id, ...doc.data() }); });
     return res.status(200).json({ success: true, data: items });

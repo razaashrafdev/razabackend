@@ -3,7 +3,7 @@ const { getDb } = require("../config/firebase");
 async function getServices(req, res) {
   try {
     const db = getDb();
-    const snapshot = await db.collection("services").orderBy("createdAt", "asc").get();
+    const snapshot = await db.collection("services").orderBy("createdAt", "desc").get();
     const services = [];
     snapshot.forEach((doc) => {
       services.push({ id: doc.id, ...doc.data() });
