@@ -1,5 +1,5 @@
 const { getDb } = require("../config/firebase");
-const { FieldValue } = require("firebase-admin/firestore");
+const { FieldValue, FieldPath } = require("firebase-admin/firestore");
 const ALLOWED_PATH_REGEX = /^\/[a-zA-Z0-9/_-]{1,200}$/;
 
 function localDayKey(d) {
@@ -7,6 +7,29 @@ function localDayKey(d) {
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   const day = String(d.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+/** Firestore map keys cannot safely use raw URL paths (e.g. "/projects") with dot notation. */
+function encodePathKey(pathValue) {
+  return Buffer.from(pathValue, "utf8").toString("base64url");
+}
+
+function decodePathKey(key) {
+  if (!key) return "/";
+  if (key.startsWith("/")) return key;
+  try {
+    const decoded = Buffer.from(key, "base64url").toString("utf8");
+    if (decoded.startsWith("/")) return decoded;
+  } catch (_err) {
+    // Fall through for legacy keys.
+  }
+  return key.replace(/_/g, ".");
+}
+
+function normalizeCount(value) {
+  if (typeof value === "number") return value;
+  if (value && typeof value.toNumber === "function") return value.toNumber();
+  return Number(value) || 0;
 }
 
 exports.recordVisit = async (req, res) => {
@@ -19,7 +42,7 @@ exports.recordVisit = async (req, res) => {
     if (!ALLOWED_PATH_REGEX.test(pathValue)) {
       return res.status(400).json({ error: "Invalid path format" });
     }
-    const sanitizedPathKey = pathValue.replace(/\./g, "_");
+    const sanitizedPathKey = encodePathKey(pathValue);
     if (!sanitizedPathKey || sanitizedPathKey.length > 200) {
       return res.status(400).json({ error: "Invalid path length" });
     }
@@ -35,10 +58,11 @@ exports.recordVisit = async (req, res) => {
         date: dayKey,
         timestamp: today.getTime(),
         views: FieldValue.increment(1),
-        [`paths.${sanitizedPathKey}`]: FieldValue.increment(1),
       },
       { merge: true }
     );
+
+    await docRef.update(new FieldPath("paths", sanitizedPathKey), FieldValue.increment(1));
 
     res.status(200).json({ ok: true });
   } catch (err) {
@@ -88,8 +112,8 @@ exports.getStats = async (req, res) => {
       }
       if (doc.paths) {
         for (const [p, count] of Object.entries(doc.paths)) {
-          const originalPath = p.replace(/_/g, ".");
-          pathCounts[originalPath] = (pathCounts[originalPath] || 0) + count;
+          const originalPath = decodePathKey(p);
+          pathCounts[originalPath] = (pathCounts[originalPath] || 0) + normalizeCount(count);
         }
       }
     });

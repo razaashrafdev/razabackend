@@ -72,7 +72,7 @@ async function verifyOtp(req, res) {
 
   const adminEmail = process.env.ADMIN_EMAIL;
   const jwtSecret = process.env.JWT_SECRET;
-  const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "1h";
+  const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "30m";
 
   if (!adminEmail) {
     return res.status(500).json({ error: "ADMIN_EMAIL is not configured" });
